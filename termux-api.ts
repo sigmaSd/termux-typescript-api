@@ -1,3 +1,16 @@
+/**
+ * Termux API wrapper for typescript.
+ *
+ * This module provides TypeScript interfaces and functions to interact with the Termux:API suite on Android devices.
+ * Each function corresponds to a Termux API command, providing a typed, promise-based interface for scripting and automation.
+ *
+ * - All functions are asynchronous and return Promises.
+ * - Some functions initiate UI interactions on the Android device (e.g., dialogs, notifications, sharing).
+ * - Many APIs require the Termux:API app to be installed and permissions granted.
+ *
+ * @module
+ */
+
 import { ChildProcess, spawn } from "node:child_process";
 
 // --- Helper Functions ---
@@ -106,30 +119,62 @@ function streamTermuxCommand(
 // --- API Types and Functions ---
 
 // --- Audio API ---
+/**
+ * Information about the device's audio system.
+ * Returned by {@link getAudioInfo}.
+ */
+/**
+ * Information about the device's audio system.
+ */
 export interface AudioInfo {
+  /** Output sample rate property as a string. */
   PROPERTY_OUTPUT_SAMPLE_RATE: string;
+  /** Output frames per buffer property as a string. */
   PROPERTY_OUTPUT_FRAMES_PER_BUFFER: string;
+  /** AudioTrack sample rate. */
   AUDIOTRACK_SAMPLE_RATE: number;
+  /** AudioTrack buffer size in frames. */
   AUDIOTRACK_BUFFER_SIZE_IN_FRAMES: number;
+  /** AudioTrack sample rate for low latency, if available. */
   AUDIOTRACK_SAMPLE_RATE_LOW_LATENCY?: number;
+  /** AudioTrack buffer size in frames for low latency, if available. */
   AUDIOTRACK_BUFFER_SIZE_IN_FRAMES_LOW_LATENCY?: number;
+  /** AudioTrack sample rate for power saving, if available. */
   AUDIOTRACK_SAMPLE_RATE_POWER_SAVING?: number;
+  /** AudioTrack buffer size in frames for power saving, if available. */
   AUDIOTRACK_BUFFER_SIZE_IN_FRAMES_POWER_SAVING?: number;
+  /** Whether Bluetooth A2DP is on. */
   BLUETOOTH_A2DP_IS_ON: boolean;
+  /** Whether a wired headset is connected. */
   WIREDHEADSET_IS_CONNECTED: boolean;
 }
 /**
  * Gets audio information from the device.
  * Corresponds to `termux-audio-info`.
  */
+/**
+ * Gets audio information from the device.
+ * Corresponds to `termux-audio-info`.
+ * @returns Promise resolving to {@link AudioInfo}
+ */
 export function getAudioInfo(): Promise<AudioInfo> {
   return executeTermuxCommand(["audio-info"], undefined, true);
 }
 
 // --- Battery Status API ---
+/**
+ * Battery status information.
+ * Returned by {@link getBatteryStatus}.
+ */
+/**
+ * Battery status information.
+ */
 export interface BatteryStatus {
+  /** Whether a battery is present. */
   present: boolean;
+  /** Battery technology string. */
   technology: string;
+  /** Battery health status. */
   health:
     | "COLD"
     | "DEAD"
@@ -139,6 +184,7 @@ export interface BatteryStatus {
     | "UNKNOWN"
     | "UNSPECIFIED_FAILURE"
     | string;
+  /** Plugged state. */
   plugged:
     | "UNPLUGGED"
     | "PLUGGED_AC"
@@ -146,27 +192,50 @@ export interface BatteryStatus {
     | "PLUGGED_USB"
     | "PLUGGED_WIRELESS"
     | string;
+  /** Charging status. */
   status: "CHARGING" | "DISCHARGING" | "FULL" | "NOT_CHARGING" | "UNKNOWN";
-  temperature: number; // Celsius
-  voltage: number; // mV
-  current: number; // microamperes
+  /** Battery temperature in Celsius. */
+  temperature: number;
+  /** Battery voltage in millivolts. */
+  voltage: number;
+  /** Instantaneous battery current in microamperes. */
+  current: number;
+  /** Average battery current in microamperes, or null if unavailable. */
   current_average: number | null;
-  percentage: number | null; // Modern way to get percentage
-  level: number; // Older way, use with scale
-  scale: number; // Older way, use with level
-  charge_counter: number | null; // microampere-hours
-  energy: number | null; // nanowatt-hours
-  cycle?: number | null; // Battery cycle count (Android U+)
+  /** Battery percentage (modern way), or null if unavailable. */
+  percentage: number | null;
+  /** Battery level (legacy way, use with scale). */
+  level: number;
+  /** Battery scale (legacy way, use with level). */
+  scale: number;
+  /** Battery charge counter in microampere-hours, or null if unavailable. */
+  charge_counter: number | null;
+  /** Battery energy in nanowatt-hours, or null if unavailable. */
+  energy: number | null;
+  /** Battery cycle count (Android U+), or null if unavailable. */
+  cycle?: number | null;
 }
 /**
  * Gets the battery status of the device.
  * Corresponds to `termux-battery-status`.
+ */
+/**
+ * Gets the battery status of the device.
+ * Corresponds to `termux-battery-status`.
+ * @returns Promise resolving to {@link BatteryStatus}
  */
 export function getBatteryStatus(): Promise<BatteryStatus> {
   return executeTermuxCommand(["battery-status"], undefined, true);
 }
 
 // --- Brightness API ---
+/**
+ * Parameters for setting screen brightness.
+ * Used by {@link setBrightness}.
+ */
+/**
+ * Parameters for setting screen brightness.
+ */
 export interface SetBrightnessParams {
   /** Brightness level from 0 to 255. */
   brightness?: number;
@@ -176,6 +245,12 @@ export interface SetBrightnessParams {
 /**
  * Sets the screen brightness.
  * Corresponds to `termux-brightness`.
+ */
+/**
+ * Sets the screen brightness.
+ * Corresponds to `termux-brightness`.
+ * @param params Brightness parameters
+ * @returns Promise resolving to a status message
  */
 export async function setBrightness(
   params: SetBrightnessParams,
@@ -195,9 +270,19 @@ export async function setBrightness(
 }
 
 // --- Call Log API ---
+/**
+ * Entry in the device's call log.
+ * Returned by {@link getCallLog}.
+ */
+/**
+ * Entry in the device's call log.
+ */
 export interface CallLogEntry {
-  name: string; // "UNKNOWN_CALLER" if not found
+  /** Contact name, or "UNKNOWN_CALLER" if not found. */
+  name: string;
+  /** Phone number. */
   phone_number: string;
+  /** Call type. */
   type:
     | "BLOCKED"
     | "INCOMING"
@@ -206,17 +291,35 @@ export interface CallLogEntry {
     | "REJECTED"
     | "VOICEMAIL"
     | "UNKNOWN_TYPE";
-  date: string; // "yyyy-MM-dd HH:mm:ss"
-  duration: string; // "HH:mm:ss" or "mm:ss"
+  /** Call date as "yyyy-MM-dd HH:mm:ss". */
+  date: string;
+  /** Call duration as "HH:mm:ss" or "mm:ss". */
+  duration: string;
+  /** SIM ID, or null if unavailable. */
   sim_id: string | null;
 }
+/**
+ * Parameters for retrieving the call log.
+ * Used by {@link getCallLog}.
+ */
+/**
+ * Parameters for retrieving the call log.
+ */
 export interface GetCallLogParams {
+  /** Maximum number of entries to return. */
   limit?: number;
+  /** Offset for pagination. */
   offset?: number;
 }
 /**
  * Gets the call log.
  * Corresponds to `termux-call-log`.
+ */
+/**
+ * Gets the call log.
+ * Corresponds to `termux-call-log`.
+ * @param params Optional parameters for filtering the call log
+ * @returns Promise resolving to an array of {@link CallLogEntry}
  */
 export async function getCallLog(
   params?: GetCallLogParams,
@@ -232,22 +335,42 @@ export async function getCallLog(
 }
 
 // --- Camera Info API ---
+/**
+ * Camera output size in pixels.
+ */
 export interface CameraOutputSize {
+  /** Width in pixels. */
   width: number;
+  /** Height in pixels. */
   height: number;
 }
+/**
+ * Physical size of the camera sensor.
+ */
 export interface CameraPhysicalSize {
+  /** Width in millimeters. */
   width: number;
+  /** Height in millimeters. */
   height: number;
 }
+/**
+ * Information about a camera device.
+ */
 export interface CameraInfo {
+  /** Camera ID string. */
   id: string;
+  /** Camera facing direction ("front", "back", or numeric). */
   facing: "front" | "back" | number;
+  /** Supported JPEG output sizes. */
   jpeg_output_sizes: CameraOutputSize[];
+  /** Supported focal lengths. */
   focal_lengths: number[];
-  auto_exposure_modes: string[]; // e.g., "CONTROL_AE_MODE_OFF", "CONTROL_AE_MODE_ON"
+  /** Supported auto exposure modes. */
+  auto_exposure_modes: string[];
+  /** Physical sensor size. */
   physical_size: CameraPhysicalSize;
-  capabilities: string[]; // e.g., "backward_compatible", "burst_capture"
+  /** Supported camera capabilities. */
+  capabilities: string[];
 }
 /**
  * Gets information about available cameras.
@@ -258,6 +381,9 @@ export function getCameraInfo(): Promise<CameraInfo[]> {
 }
 
 // --- Camera Photo API ---
+/**
+ * Parameters for taking a photo.
+ */
 export interface TakePhotoParams {
   /** Path to save the photo. */
   filePath: string;
@@ -299,8 +425,13 @@ export function clipboardSet(text: string): Promise<string> {
 }
 
 // --- Contact List API ---
+/**
+ * Contact entry.
+ */
 export interface Contact {
+  /** Contact name. */
   name: string;
+  /** Contact phone number. */
   number: string;
 }
 /**
@@ -315,33 +446,64 @@ export function getContactList(): Promise<Contact[]> {
 // This API is complex due to multiple dialog types.
 // We'll define a generic structure and specific param types.
 
+/**
+ * Base result for dialog interactions.
+ */
 export interface DialogResultBase {
-  code: number; // -1 for OK, -2 for Cancel, -3 for Neutral
-  text?: string; // For text, counter, date, time, spinner, radio (selected text), speech
+  /** Result code: -1 for OK, -2 for Cancel, -3 for Neutral. */
+  code: number;
+  /** Result text (for text, counter, date, time, spinner, radio, speech). */
+  text?: string;
+  /** Error message, if any. */
   error?: string;
 }
 
+/**
+ * Result for confirm dialogs.
+ */
 export interface DialogConfirmResult extends DialogResultBase {
-  text: "yes" | "no"; // For confirm
+  /** "yes" or "no" for confirm dialogs. */
+  text: "yes" | "no";
 }
 
+/**
+ * Value for a checkbox dialog option.
+ */
 export interface DialogCheckboxValue {
+  /** Index of the option. */
   index: number;
+  /** Text of the option. */
   text: string;
 }
+/**
+ * Result for checkbox dialogs.
+ */
 export interface DialogCheckboxResult extends DialogResultBase {
-  values?: DialogCheckboxValue[]; // For checkbox
+  /** Selected values for checkbox dialogs. */
+  values?: DialogCheckboxValue[];
 }
 
+/**
+ * Result for radio, spinner, or sheet dialogs.
+ */
 export interface DialogRadioResult extends DialogResultBase {
-  index?: number; // For radio, spinner, sheet
-}
-
-export interface DialogSheetResult extends DialogResultBase {
+  /** Selected index for radio, spinner, or sheet dialogs. */
   index?: number;
-  text?: string; // Selected item text
 }
 
+/**
+ * Result for sheet dialogs.
+ */
+export interface DialogSheetResult extends DialogResultBase {
+  /** Selected index for sheet dialogs. */
+  index?: number;
+  /** Selected item text for sheet dialogs. */
+  text?: string;
+}
+
+/**
+ * Result type for any dialog interaction.
+ */
 export type DialogResult =
   | DialogConfirmResult
   | DialogCheckboxResult
@@ -349,28 +511,52 @@ export type DialogResult =
   | DialogSheetResult
   | DialogResultBase;
 
+/**
+ * Base parameters for dialog interactions.
+ */
 export interface DialogBaseParams {
+  /** Dialog title. */
   title?: string;
-  hint?: string; // For text, counter, date, time, speech, confirm
+  /** Hint text (for text, counter, date, time, speech, confirm). */
+  hint?: string;
 }
 
+/**
+ * Parameters for text dialogs.
+ */
 export interface DialogTextParams extends DialogBaseParams {
+  /** Input type for the text field. */
   inputType?: "text" | "number" | "password" | "numberPassword";
+  /** Allow multiple lines in the text field. */
   multipleLines?: boolean;
 }
 
+/**
+ * Parameters for counter dialogs.
+ */
 export interface DialogCounterParams extends DialogBaseParams {
+  /** Minimum value. */
   min?: number;
+  /** Maximum value. */
   max?: number;
+  /** Start value. */
   start?: number;
 }
 
+/**
+ * Parameters for date dialogs.
+ */
 export interface DialogDateParams extends DialogBaseParams {
-  format?: string; // Java SimpleDateFormat
+  /** Date format (Java SimpleDateFormat). */
+  format?: string;
 }
 
+/**
+ * Parameters for dialogs with options (checkbox, radio, spinner, sheet).
+ */
 export interface DialogWithOptionsParams extends DialogBaseParams {
-  values: string[]; // For checkbox, radio, spinner, sheet
+  /** Option values for the dialog. */
+  values: string[];
 }
 
 /**
@@ -379,30 +565,72 @@ export interface DialogWithOptionsParams extends DialogBaseParams {
  * Corresponds to `termux-dialog`.
  * Note: This function initiates a UI interaction on the Android device.
  */
+/**
+ * Shows a confirm dialog.
+ * @param type The dialog type ("confirm").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogConfirmResult.
+ */
 export async function showDialog(
   type: "confirm",
   params: DialogBaseParams,
 ): Promise<DialogConfirmResult>;
+/**
+ * Shows a text dialog.
+ * @param type The dialog type ("text").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogResultBase.
+ */
 export async function showDialog(
   type: "text",
   params: DialogTextParams,
 ): Promise<DialogResultBase>;
+/**
+ * Shows a counter dialog.
+ * @param type The dialog type ("counter").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogResultBase.
+ */
 export async function showDialog(
   type: "counter",
   params: DialogCounterParams,
 ): Promise<DialogResultBase>;
+/**
+ * Shows a date dialog.
+ * @param type The dialog type ("date").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogResultBase.
+ */
 export async function showDialog(
   type: "date",
   params: DialogDateParams,
 ): Promise<DialogResultBase>;
+/**
+ * Shows a time dialog.
+ * @param type The dialog type ("time").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogResultBase.
+ */
 export async function showDialog(
   type: "time",
   params: DialogBaseParams,
 ): Promise<DialogResultBase>;
+/**
+ * Shows a dialog with options (checkbox, radio, spinner, sheet).
+ * @param type The dialog type.
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogCheckboxResult, DialogRadioResult, or DialogSheetResult.
+ */
 export async function showDialog(
   type: "checkbox" | "radio" | "spinner" | "sheet",
   params: DialogWithOptionsParams,
 ): Promise<DialogCheckboxResult | DialogRadioResult | DialogSheetResult>;
+/**
+ * Shows a speech dialog.
+ * @param type The dialog type ("speech").
+ * @param params Dialog parameters.
+ * @returns Promise resolving to a DialogResultBase.
+ */
 export async function showDialog(
   type: "speech",
   params: DialogBaseParams,
@@ -455,9 +683,15 @@ export function showDialog(
 }
 
 // --- Download API ---
+/**
+ * Parameters for downloading a file.
+ */
 export interface DownloadParams {
+  /** URL to download. */
   url: string;
+  /** Download title (optional). */
   title?: string;
+  /** Download description (optional). */
   description?: string;
   /** Absolute path to save the downloaded file. */
   filePath?: string;
@@ -477,15 +711,28 @@ export function downloadFile(params: DownloadParams): Promise<string> {
 }
 
 // --- Fingerprint API ---
+/**
+ * Parameters for fingerprint authentication.
+ */
 export interface FingerprintParams {
+  /** Dialog title. */
   title?: string;
+  /** Dialog description. */
   description?: string;
+  /** Dialog subtitle. */
   subtitle?: string;
-  cancelButtonText?: string; // Maps to "cancel" extra
+  /** Cancel button text. */
+  cancelButtonText?: string;
 }
+/**
+ * Result of fingerprint authentication.
+ */
 export interface FingerprintResult {
+  /** List of error messages, if any. */
   errors: string[];
+  /** Number of failed attempts. */
   failed_attempts: number;
+  /** Authentication result. */
   auth_result:
     | "AUTH_RESULT_SUCCESS"
     | "AUTH_RESULT_FAILURE"
@@ -509,8 +756,13 @@ export function requestFingerprint(
 }
 
 // --- Infrared API ---
+/**
+ * Range of supported infrared frequencies.
+ */
 export interface InfraredFrequencyRange {
+  /** Minimum frequency in Hz. */
   min: number;
+  /** Maximum frequency in Hz. */
   max: number;
 }
 /**
@@ -523,9 +775,14 @@ export function getInfraredFrequencies(): Promise<
   return executeTermuxCommand(["infrared-frequencies"], undefined, true);
 }
 
+/**
+ * Parameters for transmitting an infrared pattern.
+ */
 export interface TransmitInfraredParams {
+  /** Carrier frequency in Hz. */
   frequency: number;
-  pattern: number[]; // Durations in microseconds
+  /** Pattern of on/off durations in microseconds. */
+  pattern: number[];
 }
 /**
  * Transmits an infrared pattern.
@@ -543,15 +800,27 @@ export function transmitInfrared(
 }
 
 // --- Job Scheduler API ---
+/**
+ * Parameters for scheduling a job.
+ */
 export interface ScheduleJobParams {
+  /** Path to the script to run. */
   scriptPath: string;
+  /** Job ID (optional). */
   jobId?: number;
-  periodMs?: number; // Minimum 15 minutes (900000ms) for Android N+
+  /** Period in milliseconds (minimum 15 minutes for Android N+). */
+  periodMs?: number;
+  /** Required network type. */
   networkType?: "any" | "unmetered" | "cellular" | "not_roaming" | "none";
-  batteryNotLow?: boolean; // Default true
+  /** Require battery not low (default true). */
+  batteryNotLow?: boolean;
+  /** Require charging. */
   charging?: boolean;
-  persisted?: boolean; // Job persists across reboots
+  /** Persist job across reboots. */
+  persisted?: boolean;
+  /** Require device idle. */
   idle?: boolean;
+  /** Require storage not low. */
   storageNotLow?: boolean;
 }
 /**
@@ -586,7 +855,11 @@ export function scheduleJob(
   return executeTermuxCommand(["job-scheduler", ...args], undefined, false);
 }
 
+/**
+ * Parameters for cancelling a scheduled job.
+ */
 export interface CancelJobParams {
+  /** Job ID to cancel. */
   jobId: number;
 }
 /**
@@ -626,21 +899,39 @@ export function listPendingJobs(): Promise<string> {
 }
 
 // --- Location API ---
+/**
+ * Information about a device location fix.
+ */
 export interface LocationInfo {
+  /** Latitude in degrees. */
   latitude: number;
+  /** Longitude in degrees. */
   longitude: number;
+  /** Altitude in meters. */
   altitude: number;
-  accuracy: number; // meters
-  vertical_accuracy?: number; // meters (Android O+)
-  bearing: number; // degrees
-  speed: number; // meters/second
-  elapsedMs: number; // milliseconds since boot for this location fix
+  /** Horizontal accuracy in meters. */
+  accuracy: number;
+  /** Vertical accuracy in meters (Android O+). */
+  vertical_accuracy?: number;
+  /** Bearing in degrees. */
+  bearing: number;
+  /** Speed in meters/second. */
+  speed: number;
+  /** Milliseconds since boot for this location fix. */
+  elapsedMs: number;
+  /** Provider used for this fix. */
   provider: "gps" | "network" | "passive" | string;
+  /** API error message, if any. */
   API_ERROR?: string;
 }
+/**
+ * Parameters for getting device location.
+ */
 export interface GetLocationParams {
+  /** Location provider to use. */
   provider?: "gps" | "network" | "passive";
-  requestType?: "last" | "once" | "updates"; // "updates" will stream, not suitable for this helper
+  /** Request type: "last", "once", or "updates". */
+  requestType?: "last" | "once" | "updates";
 }
 /**
  * Gets the device location.
@@ -677,8 +968,15 @@ export function streamLocationUpdates(
 }
 
 // --- Media Player API ---
+/**
+ * Media player actions.
+ */
 export type MediaPlayerAction = "play" | "pause" | "resume" | "stop" | "info";
+/**
+ * Parameters for controlling the media player.
+ */
 export interface MediaPlayerCommandParams {
+  /** Action to perform. */
   action: MediaPlayerAction;
   /** File path or URL, required for 'play' action. */
   filePath?: string;
@@ -703,9 +1001,15 @@ export function mediaPlayerControl(
 }
 
 // --- Media Scanner API ---
+/**
+ * Parameters for scanning media files.
+ */
 export interface MediaScanParams {
+  /** Paths to scan. */
   paths: string[];
+  /** Scan recursively. */
   recursive?: boolean;
+  /** Verbose output. */
   verbose?: boolean;
 }
 /**
@@ -722,26 +1026,56 @@ export function mediaScan(params: MediaScanParams): Promise<string> {
 }
 
 // --- Mic Recorder API ---
+/**
+ * Microphone recorder actions.
+ */
 export type MicRecorderAction = "info" | "record" | "quit";
+/**
+ * Parameters for microphone recording.
+ */
 export interface MicRecorderRecordParams {
-  filePath?: string; // Default: TermuxAudioRecording_yyyy-MM-dd_HH-mm-ss.<ext>
-  limitSeconds?: number; // 0 or negative for unlimited
-  encoder?: "aac" | "amr_nb" | "amr_wb" | "opus"; // Default: aac
+  /** Output file path (optional). */
+  filePath?: string;
+  /** Recording time limit in seconds (0 or negative for unlimited). */
+  limitSeconds?: number;
+  /** Audio encoder to use. */
+  encoder?: "aac" | "amr_nb" | "amr_wb" | "opus";
   // format, source, bitrate, srate, channels are also available but more advanced
 }
+/**
+ * Information about microphone recording state.
+ */
 export interface MicRecorderInfo {
+  /** Whether recording is active. */
   isRecording: boolean;
+  /** Output file path, if recording. */
   outputFile?: string;
 }
 /**
  * Controls microphone recording.
  * Corresponds to `termux-microphone-record`.
  */
+/**
+ * Gets microphone recording info.
+ * @param action The action ("info").
+ * @returns Promise resolving to MicRecorderInfo.
+ */
 export async function micRecord(action: "info"): Promise<MicRecorderInfo>;
+/**
+ * Starts microphone recording.
+ * @param action The action ("record").
+ * @param params Recording parameters.
+ * @returns Promise resolving to a status message.
+ */
 export async function micRecord(
   action: "record",
   params?: MicRecorderRecordParams,
 ): Promise<string>;
+/**
+ * Stops microphone recording.
+ * @param action The action ("quit").
+ * @returns Promise resolving to a status message.
+ */
 export async function micRecord(action: "quit"): Promise<string>;
 export function micRecord(
   action: MicRecorderAction,
@@ -765,12 +1099,23 @@ export function micRecord(
 
 // --- NFC API ---
 // NFC interactions are complex and UI-dependent. This provides a basic way to trigger.
+/**
+ * NFC read modes.
+ */
 export type NfcReadMode = "short" | "full";
+/**
+ * Parameters for reading NFC tags.
+ */
 export interface NfcReadParams {
-  mode?: NfcReadMode; // Default is 'short' if not specified by CLI
+  /** Read mode ("short" or "full"). */
+  mode?: NfcReadMode;
   // timeout?: number; // CLI might have a timeout option
 }
+/**
+ * Parameters for writing to NFC tags.
+ */
 export interface NfcWriteParams {
+  /** Text to write to the tag. */
   text: string;
   // timeout?: number;
 }
@@ -795,36 +1140,69 @@ export function nfcWrite(params: NfcWriteParams): Promise<string> {
 }
 
 // --- Notification API ---
+/**
+ * Notification priority levels.
+ */
 export type NotificationPriority = "default" | "high" | "low" | "max" | "min";
+/**
+ * Button for a notification.
+ */
 export interface NotificationButton {
+  /** Button text. */
   text: string;
   /** Action string, can include $REPLY for reply buttons. */
   action: string;
 }
+/**
+ * Parameters for showing a notification.
+ */
 export interface NotificationParams {
-  content: string; // Sent via stdin
+  /** Notification content (sent via stdin). */
+  content: string;
+  /** Notification title. */
   title?: string;
+  /** Notification ID. */
   id?: string;
+  /** Notification priority. */
   priority?: NotificationPriority;
-  ledColor?: string; // ARGB hex, e.g., "FF00FF00" for green
+  /** LED color (ARGB hex). */
+  ledColor?: string;
+  /** LED on duration in ms. */
   ledOnMs?: number;
+  /** LED off duration in ms. */
   ledOffMs?: number;
-  vibratePattern?: number[]; // e.g., [500, 1000, 200]
-  sound?: boolean; // Use default notification sound
+  /** Vibrate pattern in ms. */
+  vibratePattern?: number[];
+  /** Use default notification sound. */
+  sound?: boolean;
+  /** Make notification ongoing. */
   ongoing?: boolean;
+  /** Alert only once. */
   alertOnce?: boolean;
-  action?: string; // Script to run on click
+  /** Script to run on click. */
+  action?: string;
+  /** Notification group key. */
   groupKey?: string;
-  channelId?: string; // Default: "termux-notification"
-  iconName?: string; // e.g., "alarm_on" (maps to R.drawable.ic_alarm_on_black_24dp)
-  imagePath?: string; // Absolute path to an image file
-  type?: "media"; // For media style notification
+  /** Notification channel ID. */
+  channelId?: string;
+  /** Icon name. */
+  iconName?: string;
+  /** Absolute path to an image file. */
+  imagePath?: string;
+  /** Notification type ("media" for media style). */
+  type?: "media";
+  /** Media previous action script. */
   mediaPreviousAction?: string;
+  /** Media pause action script. */
   mediaPauseAction?: string;
+  /** Media play action script. */
   mediaPlayAction?: string;
+  /** Media next action script. */
   mediaNextAction?: string;
-  buttons?: NotificationButton[]; // Max 3 buttons
-  onDeleteAction?: string; // Script to run on dismissal
+  /** Notification buttons (max 3). */
+  buttons?: NotificationButton[];
+  /** Script to run on notification dismissal. */
+  onDeleteAction?: string;
 }
 /**
  * Shows a notification.
@@ -900,10 +1278,16 @@ export function removeNotification(
   );
 }
 
+/**
+ * Parameters for creating a notification channel.
+ */
 export interface NotificationChannelParams {
+  /** Channel ID. */
   id: string;
+  /** Channel name. */
   name: string;
-  priority?: NotificationPriority; // default, high, low, max, min
+  /** Channel priority. */
+  priority?: NotificationPriority;
 }
 /**
  * Creates a notification channel (Android 8.0+).
@@ -937,15 +1321,27 @@ export function deleteNotificationChannel(
 }
 
 // --- Notification List API ---
+/**
+ * Entry for an active notification.
+ */
 export interface NotificationEntry {
+  /** Notification ID. */
   id: number;
+  /** Notification tag, if any. */
   tag: string | null;
+  /** Notification key. */
   key: string;
+  /** Notification group, if any. */
   group: string | null;
+  /** Package name of the app posting the notification. */
   packageName: string;
+  /** Notification title. */
   title: string;
+  /** Notification content. */
   content: string;
-  when: string; // "yyyy-MM-dd HH:mm:ss"
+  /** When the notification was posted ("yyyy-MM-dd HH:mm:ss"). */
+  when: string;
+  /** Lines of content, if multi-line. */
   lines?: string[];
 }
 /**
@@ -958,11 +1354,31 @@ export function listNotifications(): Promise<NotificationEntry[]> {
 }
 
 // --- Sensor API ---
+/**
+ * List of available sensors.
+ */
 export interface SensorList {
+  /** Array of sensor names. */
   sensors: string[];
 }
+/**
+ * Sensor readout values.
+ */
+/**
+ * Sensor readout values.
+ * The index signature is the sensor name, and the value is an object with a `values` array.
+ * Example: `{ "accelerometer": { values: [0.1, 9.8, 0.0] } }`
+ */
 export interface SensorReadout {
+  /**
+   * Sensor name as key, value is an object with a `values` array.
+   * @example
+   * {
+   *   "accelerometer": { values: [0.1, 9.8, 0.0] }
+   * }
+   */
   [sensorName: string]: {
+    /** Array of sensor values. */
     values: number[];
   };
 }
@@ -980,6 +1396,9 @@ export function listSensors(): Promise<SensorList> {
 export function cleanupSensors(): Promise<string> {
   return executeTermuxCommand(["sensor", "-c"], undefined, false);
 }
+/**
+ * Parameters for streaming sensor data.
+ */
 export interface StreamSensorsParams {
   /** Comma-separated list of sensor names or 'all'. */
   sensors: string;
@@ -1001,15 +1420,22 @@ export function streamSensorData(params: StreamSensorsParams): ChildProcess {
 }
 
 // --- Share API ---
+/**
+ * Parameters for sharing content or files.
+ */
 export interface ShareParams {
   /** Text content to share (if filePath is not provided). */
   text?: string;
   /** Absolute path to a file to share. */
   filePath?: string;
+  /** Share dialog title. */
   title?: string;
-  contentType?: string; // MIME type
+  /** MIME type of the content. */
+  contentType?: string;
+  /** Use default receiver. */
   useDefaultReceiver?: boolean;
-  action?: "edit" | "send" | "view"; // Default: view
+  /** Share action ("edit", "send", or "view"). */
+  action?: "edit" | "send" | "view";
 }
 /**
  * Shares content or a file using Android's share intent.
@@ -1038,17 +1464,32 @@ export function share(params: ShareParams): Promise<string> {
 }
 
 // --- SMS Inbox API ---
+/**
+ * SMS message or conversation entry.
+ */
 export interface SmsMessage {
+  /** Thread ID. */
   threadid: number;
+  /** Message type. */
   type: "inbox" | "sent" | "draft" | "failed" | "outbox" | string;
+  /** Whether the message is read. */
   read: boolean;
-  sender?: string; // "You" for sent messages, contact name or number for inbox
-  address: string; // Phone number
-  number: string; // Deprecated, same as address
-  received: string; // "yyyy-MM-dd HH:mm:ss"
+  /** Sender ("You" for sent messages, contact name or number for inbox). */
+  sender?: string;
+  /** Phone number (recipient or sender). */
+  address: string;
+  /** Deprecated: same as address. */
+  number: string;
+  /** Received timestamp ("yyyy-MM-dd HH:mm:ss"). */
+  received: string;
+  /** Message body. */
   body: string;
+  /** Message ID. */
   _id: number;
 }
+/**
+ * Parameters for listing SMS messages or conversations.
+ */
 export interface GetSmsListParams {
   /** List conversations instead of individual messages. */
   conversationList?: boolean;
@@ -1058,20 +1499,28 @@ export interface GetSmsListParams {
   conversationReturnNestedView?: boolean;
   /** For conversationList: if true, do not reverse the default sort order. */
   conversationReturnNoOrderReverse?: boolean;
+  /** Conversation offset for pagination. */
   conversationOffset?: number;
+  /** Conversation limit for pagination. */
   conversationLimit?: number;
-  conversationSelection?: string; // SQL WHERE clause
-  conversationSortOrder?: string; // SQL ORDER BY clause
+  /** SQL WHERE clause for conversations. */
+  conversationSelection?: string;
+  /** SQL ORDER BY clause for conversations. */
+  conversationSortOrder?: string;
 
   /** Offset for messages (if not conversationList or for messages within conversations). */
   offset?: number;
   /** Limit for messages. */
   limit?: number;
-  /** Message type filter: "inbox", "sent", "draft", etc. (integer value for API). */
-  type?: "all" | "inbox" | "sent" | "draft" | "outbox" | "failed"; // Maps to TextBasedSmsColumns
-  messageSelection?: string; // SQL WHERE clause for messages
-  fromAddress?: string; // Filter by sender/recipient number
-  messageSortOrder?: string; // SQL ORDER BY clause for messages
+  /** Message type filter. */
+  type?: "all" | "inbox" | "sent" | "draft" | "outbox" | "failed";
+  /** SQL WHERE clause for messages. */
+  messageSelection?: string;
+  /** Filter by sender/recipient number. */
+  fromAddress?: string;
+  /** SQL ORDER BY clause for messages. */
+  messageSortOrder?: string;
+  /** Do not reverse default sort order for messages. */
   messageReturnNoOrderReverse?: boolean;
 }
 /**
@@ -1132,10 +1581,16 @@ export function getSmsList(
 }
 
 // --- SMS Send API ---
+/**
+ * Parameters for sending an SMS message.
+ */
 export interface SendSmsParams {
+  /** Recipient phone numbers. */
   recipients: string[];
-  message: string; // Sent via stdin
-  simSlot?: number; // 0 for SIM1, 1 for SIM2, etc.
+  /** Message body (sent via stdin). */
+  message: string;
+  /** SIM slot to use (0 for SIM1, 1 for SIM2, etc.). */
+  simSlot?: number;
 }
 /**
  * Sends an SMS message.
@@ -1160,49 +1615,89 @@ export function speechToText(): ChildProcess {
 }
 
 // --- Telephony API ---
+/**
+ * Information about a telephony cell.
+ */
 export interface TelephonyCellInfo {
+  /** Cell type. */
   type: "gsm" | "lte" | "cdma" | "wcdma" | "nr" | string;
+  /** Whether the cell is registered. */
   registered: boolean;
+  /** ASU signal strength. */
   asu: number;
+  /** Signal strength in dBm. */
   dbm?: number;
+  /** Signal level. */
   level?: number;
   // GSM specific
+  /** GSM cell ID. */
   cid?: number;
+  /** GSM location area code. */
   lac?: number;
   // LTE specific
+  /** LTE cell identity. */
   ci?: number;
+  /** LTE physical cell ID. */
   pci?: number;
+  /** LTE tracking area code. */
   tac?: number;
+  /** LTE timing advance. */
   timing_advance?: number;
-  rsrp?: number; // (Android O+)
-  rsrq?: number; // (Android O+)
-  rssi?: number; // (Android Q+)
-  bands?: number[]; // (Android R+)
+  /** LTE RSRP (Android O+). */
+  rsrp?: number;
+  /** LTE RSRQ (Android O+). */
+  rsrq?: number;
+  /** LTE RSSI (Android Q+). */
+  rssi?: number;
+  /** LTE bands (Android R+). */
+  bands?: number[];
   // NR specific (5G)
+  /** NR cell identity. */
   nci?: number;
+  /** NR CSI RSRP. */
   csi_rsrp?: number;
+  /** NR CSI RSRQ. */
   csi_rsrq?: number;
+  /** NR CSI SINR. */
   csi_sinr?: number;
+  /** NR SS RSRP. */
   ss_rsrp?: number;
+  /** NR SS RSRQ. */
   ss_rsrq?: number;
+  /** NR SS SINR. */
   ss_sinr?: number;
   // CDMA specific
+  /** CDMA basestation ID. */
   basestation?: number;
+  /** CDMA latitude. */
   latitude?: number;
+  /** CDMA longitude. */
   longitude?: number;
+  /** CDMA network ID. */
   network?: number;
+  /** CDMA system ID. */
   system?: number;
+  /** CDMA dBm. */
   cdma_dbm?: number;
+  /** CDMA ECIO. */
   cdma_ecio?: number;
+  /** CDMA level. */
   cdma_level?: number;
+  /** EVDO dBm. */
   evdo_dbm?: number;
+  /** EVDO ECIO. */
   evdo_ecio?: number;
+  /** EVDO level. */
   evdo_level?: number;
+  /** EVDO SNR. */
   evdo_snr?: number;
   // WCDMA specific
+  /** WCDMA PSC. */
   psc?: number;
   // Common for GSM, LTE, WCDMA, NR
+  /** Mobile country code. */
   mcc?: number | string;
+  /** Mobile network code. */
   mnc?: number | string;
 }
 /**
@@ -1213,29 +1708,50 @@ export function getTelephonyCellInfo(): Promise<TelephonyCellInfo[]> {
   return executeTermuxCommand(["telephony-cellinfo"], undefined, true);
 }
 
+/**
+ * Information about the telephony device.
+ */
 export interface TelephonyDeviceInfo {
-  data_enabled?: string; // "true" or "false" (Android O+)
+  /** Whether data is enabled ("true" or "false", Android O+). */
+  data_enabled?: string;
+  /** Data activity state. */
   data_activity: "none" | "in" | "out" | "inout" | "dormant" | string;
+  /** Data connection state. */
   data_state:
     | "disconnected"
     | "connecting"
     | "connected"
     | "suspended"
     | string;
-  device_id: string | null; // IMEI/MEID, requires READ_PRIVILEGED_PHONE_STATE on Android 10+
+  /** Device ID (IMEI/MEID, requires privileged permission on Android 10+). */
+  device_id: string | null;
+  /** Device software version. */
   device_software_version: string | null;
+  /** Number of phones. */
   phone_count: number;
+  /** Phone type. */
   phone_type: "cdma" | "gsm" | "none" | "sip" | string;
+  /** Network operator code. */
   network_operator: string | null;
+  /** Network operator name. */
   network_operator_name: string | null;
+  /** Network country ISO code. */
   network_country_iso: string | null;
-  network_type: string; // e.g., "lte", "gsm", "unknown"
+  /** Network type (e.g., "lte", "gsm", "unknown"). */
+  network_type: string;
+  /** Whether network is roaming. */
   network_roaming: boolean;
+  /** SIM country ISO code. */
   sim_country_iso: string | null;
+  /** SIM operator code. */
   sim_operator: string | null;
+  /** SIM operator name. */
   sim_operator_name: string | null;
-  sim_serial_number: string | null; // Requires READ_PRIVILEGED_PHONE_STATE on Android 10+
-  sim_subscriber_id: string | null; // IMSI, requires READ_PRIVILEGED_PHONE_STATE on Android 10+
+  /** SIM serial number (requires privileged permission on Android 10+). */
+  sim_serial_number: string | null;
+  /** SIM subscriber ID (IMSI, requires privileged permission on Android 10+). */
+  sim_subscriber_id: string | null;
+  /** SIM state. */
   sim_state:
     | "absent"
     | "network_locked"
@@ -1266,26 +1782,43 @@ export function telephonyCall(phoneNumber: string): Promise<string> {
 }
 
 // --- Text To Speech API ---
+/**
+ * Information about a TTS engine.
+ */
 export interface TTSEngineInfo {
+  /** Engine name. */
   name: string;
+  /** Engine label. */
   label: string;
+  /** Whether this is the default engine. */
   default: boolean;
 }
+/**
+ * Parameters for speaking text using TTS.
+ */
 export interface SpeakParams {
-  text: string; // Sent via stdin
-  language?: string; // e.g., "en"
-  region?: string; // e.g., "US"
+  /** Text to speak (sent via stdin). */
+  text: string;
+  /** Language code (e.g., "en"). */
+  language?: string;
+  /** Region code (e.g., "US"). */
+  region?: string;
+  /** Language variant. */
   variant?: string;
+  /** TTS engine to use. */
   engine?: string;
-  pitch?: number; // Default 1.0
-  rate?: number; // Default 1.0
+  /** Pitch (default 1.0). */
+  pitch?: number;
+  /** Rate (default 1.0). */
+  rate?: number;
+  /** Audio stream to use (default MUSIC). */
   stream?:
     | "NOTIFICATION"
     | "ALARM"
     | "MUSIC"
     | "RING"
     | "SYSTEM"
-    | "VOICE_CALL"; // Default MUSIC
+    | "VOICE_CALL";
 }
 /**
  * Lists available TTS engines.
@@ -1311,12 +1844,20 @@ export function ttsSpeak(params: SpeakParams): Promise<string> {
 }
 
 // --- Toast API ---
+/**
+ * Parameters for showing a toast message.
+ */
 export interface ToastParams {
-  message: string; // Sent via stdin
-  shortDuration?: boolean; // -s flag
-  backgroundColor?: string; // CSS color, e.g., "#FF0000" or "red"
+  /** Toast message (sent via stdin). */
+  message: string;
+  /** Use short duration. */
+  shortDuration?: boolean;
+  /** Background color (CSS color string). */
+  backgroundColor?: string;
+  /** Text color. */
   textColor?: string;
-  gravity?: "top" | "middle" | "bottom"; // Default: middle (center)
+  /** Toast gravity ("top", "middle", or "bottom"). */
+  gravity?: "top" | "middle" | "bottom";
 }
 /**
  * Shows a toast message.
@@ -1374,9 +1915,14 @@ export function requestUsbPermission(
 // because managing FDs from a separate Node.js process is complex and platform-specific.
 
 // --- Vibrate API ---
+/**
+ * Parameters for vibrating the device.
+ */
 export interface VibrateParams {
-  durationMs?: number; // Default 1000
-  force?: boolean; // Vibrate even in silent mode
+  /** Duration in milliseconds (default 1000). */
+  durationMs?: number;
+  /** Vibrate even in silent mode. */
+  force?: boolean;
 }
 /**
  * Vibrates the device.
@@ -1395,6 +1941,9 @@ export function vibrate(params?: VibrateParams): Promise<string> {
 }
 
 // --- Volume API ---
+/**
+ * Audio stream type.
+ */
 export type AudioStreamType =
   | "alarm"
   | "music"
@@ -1402,9 +1951,16 @@ export type AudioStreamType =
   | "ring"
   | "system"
   | "call";
+
+/**
+ * Information about an audio stream's volume.
+ */
 export interface StreamVolumeInfo {
+  /** Stream type. */
   stream: AudioStreamType | string;
+  /** Current volume. */
   volume: number;
+  /** Maximum volume. */
   max_volume: number;
 }
 /**
@@ -1415,8 +1971,13 @@ export function getVolumeInfo(): Promise<StreamVolumeInfo[]> {
   return executeTermuxCommand(["volume"], undefined, true);
 }
 
+/**
+ * Parameters for setting audio stream volume.
+ */
 export interface SetVolumeParams {
+  /** Stream type. */
   stream: AudioStreamType;
+  /** Volume level. */
   volume: number;
 }
 /**
@@ -1432,6 +1993,9 @@ export function setVolume(params: SetVolumeParams): Promise<string> {
 }
 
 // --- Wallpaper API ---
+/**
+ * Parameters for setting the device wallpaper.
+ */
 export interface WallpaperParams {
   /** Absolute path to an image file. */
   filePath?: string;
@@ -1461,17 +2025,31 @@ export function setWallpaper(params: WallpaperParams): Promise<string> {
 }
 
 // --- Wifi API ---
+/**
+ * Information about the current Wi-Fi connection.
+ */
 export interface WifiConnectionInfo {
+  /** BSSID of the connected access point. */
   bssid: string;
+  /** Frequency in MHz. */
   frequency_mhz: number;
+  /** Device IP address. */
   ip: string;
+  /** Link speed in Mbps. */
   link_speed_mbps: number;
+  /** MAC address. */
   mac_address: string;
+  /** Network ID. */
   network_id: number;
+  /** Signal strength (RSSI) in dBm. */
   rssi: number;
+  /** SSID of the connected network. */
   ssid: string;
+  /** Whether the SSID is hidden. */
   ssid_hidden: boolean;
+  /** Supplicant state. */
   supplicant_state: string;
+  /** API error message, if any. */
   API_ERROR?: string;
 }
 /**
@@ -1482,16 +2060,29 @@ export function getWifiConnectionInfo(): Promise<WifiConnectionInfo> {
   return executeTermuxCommand(["wifi-connectioninfo"], undefined, true);
 }
 
+/**
+ * Result of a Wi-Fi scan.
+ */
 export interface WifiScanResult {
+  /** BSSID of the access point. */
   bssid: string;
+  /** Frequency in MHz. */
   frequency_mhz: number;
-  rssi: number; // Signal strength in dBm
+  /** Signal strength in dBm. */
+  rssi: number;
+  /** SSID of the network. */
   ssid: string;
-  timestamp: number; // Milliseconds since boot when this result was last seen
+  /** Timestamp (ms since boot) when this result was last seen. */
+  timestamp: number;
+  /** Channel bandwidth in MHz. */
   channel_bandwidth_mhz: "20" | "40" | "80" | "80+80" | "160" | "???";
-  center_frequency_mhz?: number; // Only if bandwidth > 20MHz
+  /** Center frequency in MHz (if bandwidth > 20MHz). */
+  center_frequency_mhz?: number;
+  /** Capabilities string. */
   capabilities?: string;
+  /** Operator name. */
   operator_name?: string;
+  /** Venue name. */
   venue_name?: string;
 }
 /**
@@ -1515,38 +2106,3 @@ export function setWifiEnabled(enable: boolean): Promise<string> {
     false,
   );
 }
-
-// Example Usage (commented out, for illustration)
-/*
-async function main() {
-    try {
-        const battery = await TermuxAPI.getBatteryStatus();
-        console.log("Battery Percentage:", battery.percentage ?? (battery.level / battery.scale * 100));
-
-        await TermuxAPI.showToast({ message: "Hello from Node.js!", shortDuration: true });
-
-        const contacts = await TermuxAPI.getContactList();
-        if (contacts.length > 0) {
-            console.log("First contact:", contacts[0].name);
-        }
-
-        // Stream sensor data
-        // const sensorProcess = TermuxAPI.streamSensorData({ sensors: "accelerometer", limit: 5 });
-        // sensorProcess.stdout?.on('data', (data) => {
-        //     try {
-        //         const sensorData: TermuxAPI.SensorReadout = JSON.parse(data.toString());
-        //         console.log("Accelerometer:", sensorData.ACCELEROMETER?.values);
-        //     } catch (e) {
-        //         console.error("Failed to parse sensor data:", data.toString());
-        //     }
-        // });
-        // sensorProcess.stderr?.on('data', (data) => console.error("Sensor error:", data.toString()));
-        // sensorProcess.on('close', (code) => console.log("Sensor stream closed with code:", code));
-
-    } catch (error) {
-        console.error("Termux API call failed:", error);
-    }
-}
-
-main();
-*/
