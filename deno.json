@@ -1,0 +1,6 @@
+{
+  "name": "@sigma/termux",
+  "version": "1.0.0",
+  "exports": "./termux-api.ts",
+  "license": "MIT"
+}
