@@ -23,7 +23,7 @@ const wifiConnectionInfo = await getWifiConnectionInfo();
 console.log("Local IP:", wifiConnectionInfo.ip);
 ```
 
-# Meta
+## Meta
 
 Uptodate with commit
 https://github.com/termux/termux-api/commit/7e225c97f58018d3f78d6fae17470782aadd8c17
