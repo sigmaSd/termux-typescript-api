@@ -12,16 +12,13 @@ command, providing a typed, promise-based interface for scripting and utomation.
 ## Example
 
 ```ts
-import { getBatteryStatus, getLocation, showToast } from "@sigma/termux";
-
-// Show a toast message
-await showToast({ message: "Hello from Termux API!", shortDuration: true });
+import { getBatteryStatus, getWifiConnectionInfo } from "jsr:@sigma/termux";
 
 // Get battery status
 const battery = await getBatteryStatus();
 console.log("Battery status:", battery);
 
 // Get current location
-const location = await getLocation();
-console.log("Location:", location);
+const wifiConnectionInfo = await getWifiConnectionInfo();
+console.log("Local IP:", wifiConnectionInfo.ip);
 ```
