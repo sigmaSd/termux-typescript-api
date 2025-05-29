@@ -12,7 +12,7 @@ command, providing a typed, promise-based interface for scripting and utomation.
 ## Example
 
 ```ts
-import { getBatteryStatus, getLocation, showToast } from "./termux-api.ts";
+import { getBatteryStatus, getLocation, showToast } from "@sigma/termux";
 
 // Show a toast message
 await showToast({ message: "Hello from Termux API!", shortDuration: true });
