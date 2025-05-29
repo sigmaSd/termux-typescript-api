@@ -1,4 +1,4 @@
-# Termux API wrapper for typescript (cross runtimes).
+# Termux API wrapper for typescript (cross runtimes)
 
 This module provides TypeScript interfaces and functions to interact with the
 Termux:API suite on Android devices. Each function corresponds to a Termux API
