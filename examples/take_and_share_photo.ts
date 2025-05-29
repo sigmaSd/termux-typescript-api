@@ -1,4 +1,4 @@
-import { share, takePhoto } from "../termux-api.ts";
+import { share, takePhoto } from "@sigma/termux";
 
 async function main() {
   const outputPath = "/sdcard/DCIM/Camera/deno_photo.jpg";

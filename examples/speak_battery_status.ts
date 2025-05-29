@@ -1,4 +1,4 @@
-import { getBatteryStatus, ttsSpeak } from "../termux-api.ts";
+import { getBatteryStatus, ttsSpeak } from "@sigma/termux";
 
 async function speakBatteryStatus() {
   const status = await getBatteryStatus();

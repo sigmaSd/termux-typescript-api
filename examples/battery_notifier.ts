@@ -1,4 +1,4 @@
-import { getBatteryStatus, showNotification } from "../termux-api.ts";
+import { getBatteryStatus, showNotification } from "@sigma/termux";
 
 async function notifyIfLowBattery() {
   const status = await getBatteryStatus();
